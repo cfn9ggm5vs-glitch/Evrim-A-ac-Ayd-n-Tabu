@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evrim Ağacı Aydın Topluluğu - Tabu Oyunu</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        red: {
+                            50: '#fef2f2',
+                            100: '#ffe1e1',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                            950: '#450a0a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .card-red-glow {
+            box-shadow: 0 0 25px -5px rgba(220, 38, 38, 0.25);
+        }
+        .timer-warning {
+            animation: pulse-red 0.6s infinite alternate;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(1); color: #ef4444; }
+            100% { transform: scale(1.06); color: #f87171; }
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col justify-between selection:bg-red-600 selection:text-white">
+
+    <!-- SADE VE ŞIK KIRMIZI HEADER -->
+    <header class="sticky top-0 z-40 bg-zinc-900/90 backdrop-blur-md border-b border-red-900/40 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
+            <!-- LOGO & TOPLULUK BAŞLIĞI -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('play')">
+                <div class="relative w-11 h-11 flex-shrink-0">
+                    <!-- Yerel Klasördeki Orijinal Resim (Yüklendiğinde Gösterilir) -->
+                    <img src="image.png" alt="Evrim Ağacı Aydın Topluluğu Logo" class="w-11 h-11 object-contain rounded-full border border-red-500/40 bg-zinc-900 shadow-md shadow-red-950/50 absolute inset-0 z-10" onerror="this.style.display='none'; document.getElementById('svg-logo-fallback').style.display='block';">
+                    
+                    <!-- Canlı Önizleme ve Yedek Vektörel SVG Logo -->
+                    <svg id="svg-logo-fallback" viewBox="0 0 200 200" class="w-11 h-11 rounded-full border border-red-500/40 shadow-md shadow-red-950/50 bg-slate-100" style="display:block;">
+                        <!-- Dış Koyu & Kırmızı Halkalar -->
+                        <circle cx="100" cy="100" r="95" fill="#f8fafc" stroke="#374151" stroke-width="10"/>
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="#dc2626" stroke-width="4"/>
+                        <!-- Arka Plan Dokusu -->
+                        <circle cx="140" cy="40" r="24" fill="#e2e8f0" opacity="0.6"/>
+                        <circle cx="45" cy="155" r="28" fill="#e2e8f0" opacity="0.6"/>
+                        <circle cx="160" cy="150" r="18" fill="#e2e8f0" opacity="0.5"/>
+                        <!-- Antik Tapınak & Efe Figürü Detayı (Sol Kısım) -->
+                        <g fill="#dc2626">
+                            <!-- Tapınak Sütunları -->
+                            <path d="M 22 88 L 48 88 L 48 91 L 22 91 Z M 24 92 L 27 92 L 27 114 L 24 114 Z M 30 92 L 33 92 L 33 114 L 30 114 Z M 36 92 L 39 92 L 39 114 L 36 114 Z M 42 92 L 45 92 L 45 114 L 42 114 Z M 20 115 L 50 115 L 50 118 L 20 118 Z"/>
+                            <!-- Efe Dansçısı Silüeti -->
+                            <path d="M 52 82 C 54 80, 57 80, 59 82 C 60 84, 59 87, 57 88 L 56 94 C 60 92, 66 88, 70 80 L 73 82 C 68 91, 61 96, 56 97 L 57 105 C 60 108, 64 110, 67 115 L 63 117 C 60 113, 56 110, 54 107 L 51 118 L 47 117 L 50 104 C 47 104, 44 100, 45 95 Z"/>
+                            <!-- İncir / Yaprak Detayı -->
+                            <path d="M 25 122 C 30 120, 38 123, 40 127 C 35 128, 27 126, 25 122 Z"/>
+                        </g>
+                        <!-- Kırmızı DNA Çift Sarmalı -->
+                        <path d="M 125 22 C 85 45, 80 85, 120 100 C 160 115, 135 170, 75 178 M 145 33 C 105 60, 95 90, 140 115 C 170 135, 145 180, 95 185" fill="none" stroke="#dc2626" stroke-width="12" stroke-linecap="round"/>
+                        <!-- DNA Basamakları -->
+                        <line x1="102" y1="52" x2="128" y2="42" stroke="#dc2626" stroke-width="5"/>
+                        <line x1="94" y1="78" x2="118" y2="72" stroke="#dc2626" stroke-width="5"/>
+                        <line x1="106" y1="102" x2="132" y2="108" stroke="#dc2626" stroke-width="5"/>
+                        <line x1="122" y1="130" x2="148" y2="142" stroke="#dc2626" stroke-width="5"/>
+                        <line x1="102" y1="156" x2="128" y2="168" stroke="#dc2626" stroke-width="5"/>
+                        <!-- AYDIN Yazısı -->
+                        <text x="142" y="106" font-family="'Inter', sans-serif" font-weight="900" font-size="20" fill="#374151" letter-spacing="1">AYDIN</text>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base sm:text-lg tracking-tight text-white leading-tight">Evrim Ağacı Aydın</h1>
+                    <p class="text-[11px] text-red-400 font-medium tracking-wide">Topluluk Tabu Oyunu</p>
+                </div>
+            </div>
+
+            <!-- GEZİNTİ SEKMELERİ (SADE TASARIM) -->
+            <nav class="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+                <button id="nav-play" onclick="switchTab('play')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-red-600 text-white shadow-md shadow-red-900/30">
+                    <i data-lucide="gamepad-2" class="w-4 h-4"></i>
+                    <span>Oyna</span>
+                </button>
+                <button id="nav-words" onclick="switchTab('words')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>Havuz (<span id="nav-word-count">0</span>)</span>
+                </button>
+                <button id="nav-settings" onclick="switchTab('settings')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span>Ayarlar</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ANA İÇERİK ALANI -->
+    <main class="max-w-4xl w-full mx-auto p-4 flex-1 flex flex-col justify-center">
+
+        <!-- ==================== 1. OYNA SEKME ==================== -->
+        <section id="tab-play" class="space-y-4">
+
+            <!-- TUR ÖNCESİ VE SKOR TABLOSU EKRANI -->
+            <div id="pre-game-screen" class="glass-panel rounded-2xl p-6 text-center space-y-6 max-w-md mx-auto shadow-2xl border-red-900/30">
+                <div class="space-y-2">
+                    <span class="inline-block px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-semibold border border-red-500/20">
+                        Hazırlık Ekranı
+                    </span>
+                    <h2 id="active-team-banner" class="text-2xl sm:text-3xl font-black text-white">
+                        1. Takım Başlıyor
+                    </h2>
+                    <p class="text-xs text-zinc-400">Anlatıcı hazır olduğunda süreyi başlatın.</p>
+                </div>
+
+                <!-- SKOR TABLOSU -->
+                <div class="grid grid-cols-2 gap-3 bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
+                    <div id="team1-card" class="p-3 rounded-xl border border-red-500/30 bg-red-950/20 text-center">
+                        <p id="disp-team1-name" class="text-xs font-semibold text-red-400">Aydın Efelere</p>
+                        <p id="disp-team1-score" class="text-3xl font-black text-white">0</p>
+                    </div>
+                    <div id="team2-card" class="p-3 rounded-lg border border-zinc-700 bg-zinc-800/40 text-center">
+                        <p id="disp-team2-name" class="text-xs font-semibold text-zinc-400">Hypatia Bilim</p>
+                        <p id="disp-team2-score" class="text-3xl font-black text-white">0</p>
+                    </div>
+                </div>
+
+                <!-- HIZLI OYUN BİLGİLERİ -->
+                <div class="flex items-center justify-around text-xs text-zinc-400 pt-2 border-t border-zinc-800">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="timer" class="w-4 h-4 text-red-400"></i>
+                        <span id="quick-timer-disp">60 sn</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="skip-forward" class="w-4 h-4 text-amber-400"></i>
+                        <span id="quick-pas-disp">3 Pas Hakı</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="trophy" class="w-4 h-4 text-emerald-400"></i>
+                        <span id="quick-target-disp">15 Puan</span>
+                    </div>
+                </div>
+
+                <button onclick="startGameTurn()" class="w-full py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-base shadow-lg shadow-red-900/40 transition active:scale-95 flex items-center justify-center gap-2">
+                    <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                    Turu Başlat
+                </button>
+            </div>
+
+            <!-- AKTİF OYUN EKRANI -->
+            <div id="active-game-screen" class="hidden space-y-4 max-w-md mx-auto">
+
+                <!-- ÜST BİLGİ BARI: SKOR & ZAMANLAYICI -->
+                <div class="glass-panel rounded-xl p-3 flex items-center justify-between border-red-900/30">
+                    <div class="text-left">
+                        <span id="active-team-label" class="text-[11px] font-bold uppercase tracking-wider text-red-400 block">Aydın Efelere</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs text-zinc-400">Tur Puanı:</span>
+                            <span id="current-turn-score" class="text-lg font-black text-white">0</span>
+                        </div>
+                    </div>
+
+                    <!-- KRONOMETRE -->
+                    <div class="flex items-center gap-2">
+                        <div id="timer-box" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-red-500/30 text-red-400 font-mono font-bold text-xl">
+                            <i data-lucide="clock" class="w-4 h-4 text-red-500"></i>
+                            <span id="timer-text">60</span>
+                        </div>
+                        <button onclick="togglePauseGame()" id="btn-pause" class="p-2 rounded-xl bg-zinc-900 text-zinc-300 hover:text-white border border-zinc-800">
+                            <i data-lucide="pause" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SADE VE OKUNAKLI TABU KARTI -->
+                <div id="taboo-card" class="glass-panel card-red-glow rounded-2xl p-6 text-center space-y-5 border border-red-500/30 transition-all duration-200">
+                    <!-- Hedef Kelime -->
+                    <div class="bg-red-950/40 p-4 rounded-xl border border-red-500/40">
+                        <span class="text-[10px] uppercase font-bold text-red-400 tracking-widest block mb-1">ANLATILACAK KELİME</span>
+                        <h2 id="card-target-word" class="text-2xl sm:text-3xl font-black text-white tracking-wider uppercase">
+                            YÜKLENİYOR
+                        </h2>
+                    </div>
+
+                    <!-- Yasaklı Kelimeler -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-center gap-1.5 text-rose-400 text-xs font-bold tracking-wider uppercase mb-1">
+                            <i data-lucide="ban" class="w-3.5 h-3.5"></i>
+                            <span>Yasaklı Kelimeler</span>
+                        </div>
+                        <ul id="card-forbidden-words" class="space-y-2">
+                            <!-- JS ile dinamik eklenecek -->
+                        </ul>
+                    </div>
+
+                    <!-- PAS HAKKI BİLGİSİ -->
+                    <div class="flex items-center justify-between text-xs text-zinc-400 pt-2 border-t border-zinc-800/80">
+                        <span>Kalan Pas Hakkı:</span>
+                        <span id="card-pas-count" class="font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">3 / 3</span>
+                    </div>
+                </div>
+
+                <!-- KONTROL BUTONLARI -->
+                <div class="grid grid-cols-3 gap-2.5 pt-1">
+                    <!-- TABU BUTONU -->
+                    <button onclick="handleGameAction('taboo')" class="py-3.5 px-2 rounded-xl bg-zinc-900 hover:bg-rose-950 text-rose-400 hover:text-rose-200 font-bold border border-rose-500/30 transition active:scale-95 flex flex-col items-center justify-center gap-1 shadow-md">
+                        <i data-lucide="x-circle" class="w-6 h-6"></i>
+                        <span class="text-xs uppercase font-extrabold tracking-wider">TABU (-1)</span>
+                    </button>
+
+                    <!-- PAS BUTONU -->
+                    <button id="btn-pas-action" onclick="handleGameAction('pas')" class="py-3.5 px-2 rounded-xl bg-zinc-900 hover:bg-amber-950 text-amber-400 hover:text-amber-200 font-bold border border-amber-500/30 transition active:scale-95 flex flex-col items-center justify-center gap-1 shadow-md">
+                        <i data-lucide="skip-forward" class="w-6 h-6"></i>
+                        <span class="text-xs uppercase font-extrabold tracking-wider">PAS (0)</span>
+                    </button>
+
+                    <!-- DOĞRU BUTONU -->
+                    <button onclick="handleGameAction('correct')" class="py-3.5 px-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition active:scale-95 flex flex-col items-center justify-center gap-1 shadow-lg shadow-red-950/50">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                        <span class="text-xs uppercase font-extrabold tracking-wider">DOĞRU (+1)</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ==================== 2. KELİME HAVUZU SEKME ==================== -->
+        <section id="tab-words" class="hidden space-y-4">
+            
+            <div class="glass-panel rounded-2xl p-5 space-y-4 border-red-900/30">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-extrabold text-white">Kelime Havuzu</h2>
+                        <p class="text-xs text-zinc-400">Evrim Ağacı Aydın Topluluğu kelime listeniz.</p>
+                    </div>
+                    
+                    <button onclick="openAddWordModal()" class="py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs transition shadow-md shadow-red-900/30 flex items-center justify-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Yeni Kelime Ekle
+                    </button>
+                </div>
+
+                <!-- ARAMA VE DIŞA/İÇE AKTARMA -->
+                <div class="flex flex-col sm:flex-row items-center gap-2 pt-2 border-t border-zinc-800">
+                    <div class="relative w-full sm:flex-1">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-zinc-500"></i>
+                        <input type="text" id="word-search-input" oninput="renderWordsList()" placeholder="Kelime veya yasaklı kelime ara..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-red-500">
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button onclick="exportWordsJSON()" class="flex-1 sm:flex-none py-2 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-medium border border-zinc-700 flex items-center justify-center gap-1.5">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                            Dışa Aktar
+                        </button>
+                        
+                        <label class="flex-1 sm:flex-none py-2 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-medium border border-zinc-700 flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                            İçe Aktar
+                            <input type="file" id="import-json-input" accept=".json" onchange="importWordsJSON(event)" class="hidden">
+                        </label>
+
+                        <button onclick="confirmResetWords()" class="py-2 px-3 rounded-xl bg-zinc-900 hover:bg-rose-950 text-rose-400 text-xs font-medium border border-zinc-800 flex items-center justify-center gap-1.5" title="Varsayılana Sıfırla">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KELİME KARTLARI GRİD -->
+            <div id="words-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Dinamik liste -->
+            </div>
+
+            <div id="words-empty-state" class="hidden text-center py-12 glass-panel rounded-2xl space-y-2 border-red-900/20">
+                <i data-lucide="inbox" class="w-10 h-10 text-zinc-600 mx-auto"></i>
+                <p class="text-xs text-zinc-400">Aranan kriterde kelime bulunamadı.</p>
+            </div>
+
+        </section>
+
+        <!-- ==================== 3. AYARLAR SEKME ==================== -->
+        <section id="tab-settings" class="hidden space-y-4 max-w-md mx-auto">
+            <div class="glass-panel rounded-2xl p-6 space-y-5 border-red-900/30">
+                <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-5 h-5 text-red-500"></i>
+                    Oyun Ayarları
+                </h2>
+
+                <div class="space-y-4">
+                    <!-- TUR SÜRESİ -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-zinc-300 flex justify-between">
+                            <span>Tur Süresi (Saniye)</span>
+                            <span id="sett-timer-val" class="text-red-400 font-bold">60 sn</span>
+                        </label>
+                        <input type="range" id="sett-timer" min="30" max="180" step="15" value="60" oninput="updateSettingsFromUI()" class="w-full accent-red-600 bg-zinc-900 rounded-lg h-2">
+                    </div>
+
+                    <!-- PAS HAKKI -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-zinc-300 flex justify-between">
+                            <span>Tur Başına Pas Hakkı</span>
+                            <span id="sett-pas-val" class="text-amber-400 font-bold">3 Pas</span>
+                        </label>
+                        <input type="range" id="sett-pas" min="0" max="10" step="1" value="3" oninput="updateSettingsFromUI()" class="w-full accent-amber-500 bg-zinc-900 rounded-lg h-2">
+                    </div>
+
+                    <!-- HEDEF PUAN -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-zinc-300 flex justify-between">
+                            <span>Kazanma Hedef Puanı</span>
+                            <span id="sett-target-val" class="text-emerald-400 font-bold">15 Puan</span>
+                        </label>
+                        <input type="range" id="sett-target" min="5" max="50" step="5" value="15" oninput="updateSettingsFromUI()" class="w-full accent-emerald-500 bg-zinc-900 rounded-lg h-2">
+                    </div>
+
+                    <!-- TAKIM İSİMLERİ -->
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-red-400">1. Takım Adı</label>
+                            <input type="text" id="sett-team1" value="Aydın Efelere" onchange="updateSettingsFromUI()" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-zinc-400">2. Takım Adı</label>
+                            <input type="text" id="sett-team2" value="Hypatia Bilim" onchange="updateSettingsFromUI()" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+                        </div>
+                    </div>
+
+                    <!-- SES EFEKTLERİ -->
+                    <div class="flex items-center justify-between pt-3 border-t border-zinc-800">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="volume-2" class="w-4 h-4 text-zinc-300"></i>
+                            <span class="text-xs font-semibold text-zinc-300">Ses Efektleri</span>
+                        </div>
+                        <input type="checkbox" id="sett-sound" checked onchange="updateSettingsFromUI()" class="w-5 h-5 accent-red-600 rounded cursor-pointer">
+                    </div>
+                </div>
+
+                <button onclick="resetScoresAndGame()" class="w-full py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-bold border border-zinc-800 transition flex items-center justify-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Skorları Sıfırla
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-4 text-[11px] text-zinc-500 border-t border-zinc-900">
+        Evrim Ağacı Aydın Topluluğu &copy; 2026 - Bilimle ve Sevgiyle Kalın.
+    </footer>
+
+    <!-- MODALLAR -->
+
+    <!-- KELİME EKLE/DÜZENLE MODAL -->
+    <div id="modal-word" class="fixed inset-0 z-50 hidden bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl p-6 max-w-md w-full space-y-4 border-red-900/40 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 id="modal-word-title" class="text-sm font-bold text-white">Yeni Kelime Ekle</h3>
+                <button onclick="closeWordModal()" class="text-zinc-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="word-form" onsubmit="saveWordForm(event)" class="space-y-3">
+                <input type="hidden" id="edit-word-id">
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-red-400">Hedef Kelime (Anlatılacak)</label>
+                    <input type="text" id="input-target" required placeholder="Örn: EVRİM" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm font-bold text-white uppercase focus:outline-none focus:border-red-500">
+                </div>
+
+                <div class="space-y-2 pt-1">
+                    <label class="text-xs font-bold text-rose-400">5 Yasaklı Kelime</label>
+                    <input type="text" id="input-forbidden-0" required placeholder="1. Yasaklı kelime" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500">
+                    <input type="text" id="input-forbidden-1" required placeholder="2. Yasaklı kelime" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500">
+                    <input type="text" id="input-forbidden-2" required placeholder="3. Yasaklı kelime" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500">
+                    <input type="text" id="input-forbidden-3" required placeholder="4. Yasaklı kelime" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500">
+                    <input type="text" id="input-forbidden-4" required placeholder="5. Yasaklı kelime" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500">
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="button" onclick="closeWordModal()" class="flex-1 py-2 rounded-xl bg-zinc-900 text-zinc-300 text-xs font-bold hover:bg-zinc-800 transition">İptal</button>
+                    <button type="submit" class="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition shadow-md">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TUR ÖZETİ MODAL -->
+    <div id="modal-turn-summary" class="fixed inset-0 z-50 hidden bg-zinc-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl p-6 max-w-sm w-full text-center space-y-4 border-red-900/40 shadow-2xl">
+            <div class="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto border border-red-500/30">
+                <i data-lucide="flag" class="w-6 h-6"></i>
+            </div>
+
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-white">Süre Doldu!</h3>
+                <p id="summary-team-title" class="text-xs font-bold text-red-400 uppercase tracking-wider">Tur Özeti</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 bg-zinc-900/90 p-3 rounded-xl border border-zinc-800 text-center">
+                <div>
+                    <span class="text-[10px] text-emerald-400 font-bold block">DOĞRU</span>
+                    <span id="sum-correct" class="text-xl font-black text-emerald-400">0</span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-rose-400 font-bold block">TABU</span>
+                    <span id="sum-taboo" class="text-xl font-black text-rose-400">0</span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-amber-400 font-bold block">PAS</span>
+                    <span id="sum-pas" class="text-xl font-black text-amber-400">0</span>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900 p-3 rounded-xl border border-zinc-800">
+                <span class="text-xs text-zinc-400">Kazanılan Net Puan:</span>
+                <p id="sum-net" class="text-2xl font-black text-white">+0</p>
+            </div>
+
+            <button onclick="closeTurnSummaryAndSwitch()" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition shadow-md">
+                Devam Et / Sıradaki Takım
+            </button>
+        </div>
+    </div>
+
+    <!-- OYUN BİTTİ MODAL -->
+    <div id="modal-game-over" class="fixed inset-0 z-50 hidden bg-zinc-950/90 backdrop-blur-lg flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl p-6 max-w-sm w-full text-center space-y-5 border-amber-500/30 shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/40 animate-bounce">
+                <i data-lucide="crown" class="w-7 h-7"></i>
+            </div>
+
+            <div class="space-y-1">
+                <span class="text-xs font-extrabold uppercase tracking-widest text-amber-400">Oyun Kazananı</span>
+                <h3 id="winner-team-name" class="text-2xl font-black text-white">Aydın Efelere</h3>
+                <p class="text-xs text-zinc-400">Tebrikler! Belirlenen hedef puana ulaştınız.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 bg-zinc-900 p-3.5 rounded-xl border border-zinc-800">
+                <div>
+                    <p id="win-team1-label" class="text-xs text-zinc-400">Takım 1</p>
+                    <p id="win-team1-score" class="text-2xl font-black text-red-400">15</p>
+                </div>
+                <div>
+                    <p id="win-team2-label" class="text-xs text-zinc-400">Takım 2</p>
+                    <p id="win-team2-score" class="text-2xl font-black text-zinc-300">10</p>
+                </div>
+            </div>
+
+            <button onclick="resetScoresAndGame()" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs transition shadow-md">
+                Yeni Oyun Başlat
+            </button>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- BİLİM & EVRİM AĞACI TEMALI BAŞLANGIÇ KELİMELERİ -->
+    <script>
+        const DEFAULT_WORDS = [
+            { id: "1", target: "EVRİM", forbidden: ["Darwin", "Tür", "Doğal Seçilim", "Mutasyon", "Değişim"] },
+            { id: "2", target: "DNA", forbidden: ["Gen", "Kromozom", "Sarmal", "Nükleotit", "Hücre"] },
+            { id: "3", target: "MUTASYON", forbidden: ["Genetik", "Değişim", "Radyasyon", "Dizi", "Hata"] },
+            { id: "4", target: "FOSİL", forbidden: ["Kayaç", "Kemik", "Arkeoloji", "Milyon Yıl", "Katman"] },
+            { id: "5", target: "DOĞAL SEÇİLİM", forbidden: ["Hayatta Kalmak", "Adaptasyon", "Çevre", "Üreme", "Elverişli"] },
+            { id: "6", target: "BİLİM", forbidden: ["Deney", "Gözlem", "Teori", "Yasa", "Laboratuvar"] },
+            { id: "7", target: "AYDIN", forbidden: ["Efe", "Tralleis", "Afrodisias", "İncir", "Menderes"] },
+            { id: "8", target: "ATOM", forbidden: ["Proton", "Nötron", "Elektron", "Çekirdek", "Fizik"] },
+            { id: "9", target: "HÜCRE", forbidden: ["Organel", "Mitokondri", "Zar", "Biyoloji", "Dokusal"] },
+            { id: "10", target: "TEORİ", forbidden: ["Hipotez", "Kanıt", "Açıklama", "Fikir", "Deney"] },
+            { id: "11", target: "HYPATIA", forbidden: ["İskenderiye", "Kadın Bilim İnsanı", "Felsefe", "Matematik", "Tarih"] },
+            { id: "12", target: "VİRÜS", forbidden: ["Aşı", "Hastalık", "Bulaşıcı", "Kapsit", "RNA"] },
+            { id: "13", target: "GENETİK", forbidden: ["Kalıtım", "Mendel", "Biyoloji", "Mühendislik", "Soy"] },
+            { id: "14", target: "BEYİN", forbidden: ["Nöron", "Sinir", "Düşünmek", "Korteks", "Organ"] },
+            { id: "15", target: "UZAY", forbidden: ["Galaksi", "Yıldız", "Gezegen", "Karanlık", "Kozmos"] },
+            { id: "16", target: "BİYOÇEŞİTLİLİK", forbidden: ["Tür", "Ekosistem", "Canlı", "Doğa", "Çevre"] },
+            { id: "17", target: "ADAPTASYON", forbidden: ["Uyum", "Çevre", "Tür", "Özellik", "Hayatta Kalma"] },
+            { id: "18", target: "SİMÜLASYON", forbidden: ["Model", "Bilgisayar", "Yazılım", "Test", "Sanal"] },
+            { id: "19", target: "ARKEOLOJİ", forbidden: ["Kazı", "Tarih", "Antik", "Sıtı", "Uygarlık"] },
+            { id: "20", target: "KARA DELİK", forbidden: ["Yerçekimi", "Işık", "Uzay", "Çökme", "Olay Ufku"] },
+            { id: "21", target: "ENZİM", forbidden: ["Protein", "Katalizör", "Tepkime", "Biyokimya", "Sindirim"] },
+            { id: "22", target: "MİTOKONDRİ", forbidden: ["Enerji", "ATP", "Hücre", "Solunum", "Organel"] },
+            { id: "23", target: "TÜRLENME", forbidden: ["İzolasyon", "Popülasyon", "Yeni Tür", "Coğrafi", "Gen Havuzu"] },
+            { id: "24", target: "ELEKTRON", forbidden: ["Eksi Yük", "Yörünge", "Atom", "Akım", "Çekirdek"] },
+            { id: "25", target: "HİPOTEZ", forbidden: ["Varsayım", "Deney", "Test", "Bilimsel Yöntem", "Soru"] }
+        ];
+
+        /* SES SENTEZLEYİCİ */
+        const SoundEngine = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playTick(urgent = false) {
+                if (!appSettings.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(urgent ? 800 : 400, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.06);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.06);
+            },
+            playCorrect() {
+                if (!appSettings.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + (i * 0.05));
+                    gain.gain.setValueAtTime(0.12, now + (i * 0.05));
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.05) + 0.15);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + (i * 0.05));
+                    osc.stop(now + (i * 0.05) + 0.15);
+                });
+            },
+            playTaboo() {
+                if (!appSettings.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            },
+            playSkip() {
+                if (!appSettings.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(550, now + 0.1);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
+        };
+
+        /* GENEL UYGULAMA DURUMU */
+        let wordsList = [];
+        let appSettings = {
+            timerDuration: 60,
+            skipLimit: 3,
+            targetScore: 15,
+            team1Name: 'Aydın Efelere',
+            team2Name: 'Hypatia Bilim',
+            soundEnabled: true
+        };
+
+        let gameState = {
+            activeTeam: 1,
+            team1Score: 0,
+            team2Score: 0,
+            turnCorrect: 0,
+            turnTaboo: 0,
+            turnPas: 0,
+            pasLeft: 3,
+            timeLeft: 60,
+            timerInterval: null,
+            isPlaying: false,
+            isPaused: false,
+            currentDeck: [],
+            currentCard: null
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLocalStorage();
+            renderWordsList();
+            updateSettingsUI();
+            updatePreGameUI();
+            lucide.createIcons();
+        });
+
+        function loadLocalStorage() {
+            const savedWords = localStorage.getItem('tabux_ea_words');
+            if (savedWords) {
+                try { wordsList = JSON.parse(savedWords); } catch (e) { wordsList = [...DEFAULT_WORDS]; }
+            } else {
+                wordsList = [...DEFAULT_WORDS];
+                saveWordsToStorage();
+            }
+
+            const savedSettings = localStorage.getItem('tabux_ea_settings');
+            if (savedSettings) {
+                try { appSettings = { ...appSettings, ...JSON.parse(savedSettings) }; } catch (e) {}
+            }
+        }
+
+        function saveWordsToStorage() {
+            localStorage.setItem('tabux_ea_words', JSON.stringify(wordsList));
+            document.getElementById('nav-word-count').innerText = wordsList.length;
+        }
+
+        function saveSettingsToStorage() {
+            localStorage.setItem('tabux_ea_settings', JSON.stringify(appSettings));
+        }
+
+        function switchTab(tabName) {
+            ['play', 'words', 'settings'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                navBtn.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+                navBtn.classList.add('text-zinc-400');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            activeNav.classList.add('bg-red-600', 'text-white', 'shadow-md');
+            activeNav.classList.remove('text-zinc-400');
+
+            if (tabName === 'words') renderWordsList();
+        }
+
+        function updatePreGameUI() {
+            document.getElementById('disp-team1-name').innerText = appSettings.team1Name;
+            document.getElementById('disp-team1-score').innerText = gameState.team1Score;
+            document.getElementById('disp-team2-name').innerText = appSettings.team2Name;
+            document.getElementById('disp-team2-score').innerText = gameState.team2Score;
+
+            const activeName = gameState.activeTeam === 1 ? appSettings.team1Name : appSettings.team2Name;
+            const banner = document.getElementById('active-team-banner');
+            banner.innerText = `${activeName} Sırası`;
+
+            document.getElementById('quick-timer-disp').innerText = `${appSettings.timerDuration} sn`;
+            document.getElementById('quick-pas-disp').innerText = `${appSettings.skipLimit} Pas Hakı`;
+            document.getElementById('quick-target-disp').innerText = `${appSettings.targetScore} Puan`;
+        }
+
+        function startGameTurn() {
+            if (wordsList.length === 0) {
+                showToast("Kelime havuzu boş! Lütfen önce kelime ekleyin.", "error");
+                return;
+            }
+
+            gameState.turnCorrect = 0;
+            gameState.turnTaboo = 0;
+            gameState.turnPas = 0;
+            gameState.pasLeft = appSettings.skipLimit;
+            gameState.timeLeft = appSettings.timerDuration;
+            gameState.isPlaying = true;
+            gameState.isPaused = false;
+
+            gameState.currentDeck = [...wordsList].sort(() => Math.random() - 0.5);
+
+            document.getElementById('pre-game-screen').classList.add('hidden');
+            document.getElementById('active-game-screen').classList.remove('hidden');
+
+            const teamName = gameState.activeTeam === 1 ? appSettings.team1Name : appSettings.team2Name;
+            document.getElementById('active-team-label').innerText = teamName;
+
+            updateTurnScoreUI();
+            nextCard();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(gameState.timerInterval);
+            const timerText = document.getElementById('timer-text');
+            const timerBox = document.getElementById('timer-box');
+
+            gameState.timerInterval = setInterval(() => {
+                if (gameState.isPaused) return;
+
+                gameState.timeLeft--;
+                timerText.innerText = gameState.timeLeft;
+
+                if (gameState.timeLeft <= 10 && gameState.timeLeft > 0) {
+                    timerBox.classList.add('timer-warning');
+                    SoundEngine.playTick(true);
+                } else {
+                    timerBox.classList.remove('timer-warning');
+                    if (gameState.timeLeft > 0) SoundEngine.playTick(false);
+                }
+
+                if (gameState.timeLeft <= 0) {
+                    endTurn();
+                }
+            }, 1000);
+        }
+
+        function togglePauseGame() {
+            gameState.isPaused = !gameState.isPaused;
+            const btn = document.getElementById('btn-pause');
+            btn.innerHTML = gameState.isPaused 
+                ? '<i data-lucide="play" class="w-5 h-5 text-emerald-400"></i>' 
+                : '<i data-lucide="pause" class="w-5 h-5"></i>';
+            lucide.createIcons();
+        }
+
+        function nextCard() {
+            if (gameState.currentDeck.length === 0) {
+                gameState.currentDeck = [...wordsList].sort(() => Math.random() - 0.5);
+            }
+            gameState.currentCard = gameState.currentDeck.pop();
+            renderCard(gameState.currentCard);
+        }
+
+        function renderCard(card) {
+            document.getElementById('card-target-word').innerText = card.target;
+            const forbiddenUl = document.getElementById('card-forbidden-words');
+            forbiddenUl.innerHTML = card.forbidden.map(word => `
+                <li class="bg-zinc-900 text-rose-200 font-medium text-sm sm:text-base py-2 px-3 rounded-xl border border-rose-500/20 shadow-sm">
+                    ${word}
+                </li>
+            `).join('');
+
+            const pasBtn = document.getElementById('btn-pas-action');
+            document.getElementById('card-pas-count').innerText = `${gameState.pasLeft} / ${appSettings.skipLimit}`;
+
+            if (gameState.pasLeft <= 0) {
+                pasBtn.classList.add('opacity-40', 'pointer-events-none');
+            } else {
+                pasBtn.classList.remove('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        function handleGameAction(action) {
+            if (!gameState.isPlaying || gameState.isPaused) return;
+
+            if (action === 'correct') {
+                gameState.turnCorrect++;
+                SoundEngine.playCorrect();
+            } else if (action === 'taboo') {
+                gameState.turnTaboo++;
+                SoundEngine.playTaboo();
+            } else if (action === 'pas') {
+                if (gameState.pasLeft <= 0) return;
+                gameState.pasLeft--;
+                gameState.turnPas++;
+                SoundEngine.playSkip();
+            }
+
+            updateTurnScoreUI();
+            nextCard();
+        }
+
+        function updateTurnScoreUI() {
+            const net = gameState.turnCorrect - gameState.turnTaboo;
+            document.getElementById('current-turn-score').innerText = net;
+        }
+
+        function endTurn() {
+            clearInterval(gameState.timerInterval);
+            gameState.isPlaying = false;
+
+            const netScore = gameState.turnCorrect - gameState.turnTaboo;
+            
+            if (gameState.activeTeam === 1) {
+                gameState.team1Score += netScore;
+            } else {
+                gameState.team2Score += netScore;
+            }
+
+            if (gameState.team1Score >= appSettings.targetScore || gameState.team2Score >= appSettings.targetScore) {
+                showGameOverModal();
+                return;
+            }
+
+            document.getElementById('summary-team-title').innerText = `${gameState.activeTeam === 1 ? appSettings.team1Name : appSettings.team2Name} TUR ÖZETİ`;
+            document.getElementById('sum-correct').innerText = gameState.turnCorrect;
+            document.getElementById('sum-taboo').innerText = gameState.turnTaboo;
+            document.getElementById('sum-pas').innerText = gameState.turnPas;
+            document.getElementById('sum-net').innerText = (netScore >= 0 ? `+${netScore}` : `${netScore}`);
+
+            document.getElementById('modal-turn-summary').classList.remove('hidden');
+        }
+
+        function closeTurnSummaryAndSwitch() {
+            document.getElementById('modal-turn-summary').classList.add('hidden');
+            gameState.activeTeam = gameState.activeTeam === 1 ? 2 : 1;
+
+            document.getElementById('active-game-screen').classList.add('hidden');
+            document.getElementById('pre-game-screen').classList.remove('hidden');
+            updatePreGameUI();
+        }
+
+        function showGameOverModal() {
+            const winnerName = gameState.team1Score >= appSettings.targetScore ? appSettings.team1Name : appSettings.team2Name;
+            document.getElementById('winner-team-name').innerText = winnerName;
+
+            document.getElementById('win-team1-label').innerText = appSettings.team1Name;
+            document.getElementById('win-team1-score').innerText = gameState.team1Score;
+            document.getElementById('win-team2-label').innerText = appSettings.team2Name;
+            document.getElementById('win-team2-score').innerText = gameState.team2Score;
+
+            document.getElementById('modal-game-over').classList.remove('hidden');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function resetScoresAndGame() {
+            gameState.team1Score = 0;
+            gameState.team2Score = 0;
+            gameState.activeTeam = 1;
+            gameState.isPlaying = false;
+            clearInterval(gameState.timerInterval);
+
+            document.getElementById('modal-game-over').classList.add('hidden');
+            document.getElementById('active-game-screen').classList.add('hidden');
+            document.getElementById('pre-game-screen').classList.remove('hidden');
+
+            updatePreGameUI();
+            showToast("Oyun skorları sıfırlandı.");
+        }
+
+        function renderWordsList() {
+            const container = document.getElementById('words-grid');
+            const emptyState = document.getElementById('words-empty-state');
+            const searchQuery = document.getElementById('word-search-input').value.toLowerCase().trim();
+
+            const filteredWords = wordsList.filter(w => 
+                w.target.toLowerCase().includes(searchQuery) ||
+                w.forbidden.some(f => f.toLowerCase().includes(searchQuery))
+            );
+
+            if (filteredWords.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = filteredWords.map(word => `
+                <div class="glass-panel rounded-xl p-4 space-y-2 border border-zinc-800 relative">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-black text-red-400 text-base uppercase tracking-wider">${word.target}</h4>
+                        <div class="flex items-center gap-1">
+                            <button onclick="openEditWordModal('${word.id}')" class="p-1 rounded bg-zinc-900 text-zinc-400 hover:text-white transition">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteWord('${word.id}')" class="p-1 rounded bg-zinc-900 text-zinc-400 hover:text-rose-400 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1">
+                        ${word.forbidden.map(f => `
+                            <span class="text-[11px] bg-zinc-900 text-zinc-300 px-2 py-0.5 rounded border border-zinc-800">
+                                ${f}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+            document.getElementById('nav-word-count').innerText = wordsList.length;
+        }
+
+        function openAddWordModal() {
+            document.getElementById('modal-word-title').innerText = "Yeni Kelime Ekle";
+            document.getElementById('edit-word-id').value = "";
+            document.getElementById('word-form').reset();
+            document.getElementById('modal-word').classList.remove('hidden');
+        }
+
+        function openEditWordModal(id) {
+            const item = wordsList.find(w => w.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-word-title').innerText = "Kelimeyi Düzenle";
+            document.getElementById('edit-word-id').value = item.id;
+            document.getElementById('input-target').value = item.target;
+            item.forbidden.forEach((f, idx) => {
+                const el = document.getElementById(`input-forbidden-${idx}`);
+                if (el) el.value = f;
+            });
+
+            document.getElementById('modal-word').classList.remove('hidden');
+        }
+
+        function closeWordModal() {
+            document.getElementById('modal-word').classList.add('hidden');
+        }
+
+        function saveWordForm(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-word-id').value;
+            const target = document.getElementById('input-target').value.trim().toUpperCase();
+            const forbidden = [
+                document.getElementById('input-forbidden-0').value.trim(),
+                document.getElementById('input-forbidden-1').value.trim(),
+                document.getElementById('input-forbidden-2').value.trim(),
+                document.getElementById('input-forbidden-3').value.trim(),
+                document.getElementById('input-forbidden-4').value.trim()
+            ];
+
+            if (editId) {
+                const idx = wordsList.findIndex(w => w.id === editId);
+                if (idx !== -1) {
+                    wordsList[idx] = { id: editId, target, forbidden };
+                    showToast("Kelime güncellendi.");
+                }
+            } else {
+                const newObj = {
+                    id: Date.now().toString(),
+                    target,
+                    forbidden
+                };
+                wordsList.unshift(newObj);
+                showToast("Yeni kelime havuza eklendi.");
+            }
+
+            saveWordsToStorage();
+            renderWordsList();
+            closeWordModal();
+        }
+
+        function deleteWord(id) {
+            wordsList = wordsList.filter(w => w.id !== id);
+            saveWordsToStorage();
+            renderWordsList();
+            showToast("Kelime silindi.", "info");
+        }
+
+        function exportWordsJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(wordsList, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `evrim_agaci_aydin_tabu_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Kelime listesi indirildi.");
+        }
+
+        function importWordsJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        wordsList = imported.map((item, idx) => ({
+                            id: item.id || (Date.now() + idx).toString(),
+                            target: item.target || "BİLİNMEYEN",
+                            forbidden: Array.isArray(item.forbidden) ? item.forbidden.slice(0, 5) : ["-","-","-","-","-"]
+                        }));
+                        saveWordsToStorage();
+                        renderWordsList();
+                        showToast(`${wordsList.length} adet kelime aktarıldı!`);
+                    } else {
+                        showToast("Geçersiz JSON formatı!", "error");
+                    }
+                } catch (err) {
+                    showToast("Dosya okuma hatası!", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function confirmResetWords() {
+            if (window.confirm("Kelime havuzunu Evrim Ağacı Aydın varsayılan listesine sıfırlamak istiyor musunuz?")) {
+                wordsList = [...DEFAULT_WORDS];
+                saveWordsToStorage();
+                renderWordsList();
+                showToast("Kelime havuzu sıfırlandı.");
+            }
+        }
+
+        function updateSettingsFromUI() {
+            appSettings.timerDuration = parseInt(document.getElementById('sett-timer').value);
+            appSettings.skipLimit = parseInt(document.getElementById('sett-pas').value);
+            appSettings.targetScore = parseInt(document.getElementById('sett-target').value);
+            appSettings.team1Name = document.getElementById('sett-team1').value.trim() || "1. Takım";
+            appSettings.team2Name = document.getElementById('sett-team2').value.trim() || "2. Takım";
+            appSettings.soundEnabled = document.getElementById('sett-sound').checked;
+
+            document.getElementById('sett-timer-val').innerText = `${appSettings.timerDuration} sn`;
+            document.getElementById('sett-pas-val').innerText = `${appSettings.skipLimit} Pas`;
+            document.getElementById('sett-target-val').innerText = `${appSettings.targetScore} Puan`;
+
+            saveSettingsToStorage();
+            updatePreGameUI();
+        }
+
+        function updateSettingsUI() {
+            document.getElementById('sett-timer').value = appSettings.timerDuration;
+            document.getElementById('sett-pas').value = appSettings.skipLimit;
+            document.getElementById('sett-target').value = appSettings.targetScore;
+            document.getElementById('sett-team1').value = appSettings.team1Name;
+            document.getElementById('sett-team2').value = appSettings.team2Name;
+            document.getElementById('sett-sound').checked = appSettings.soundEnabled;
+
+            document.getElementById('sett-timer-val').innerText = `${appSettings.timerDuration} sn`;
+            document.getElementById('sett-pas-val').innerText = `${appSettings.skipLimit} Pas`;
+            document.getElementById('sett-target-val').innerText = `${appSettings.targetScore} Puan`;
+        }
+
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-rose-600' : (type === 'info' ? 'bg-amber-600' : 'bg-red-600');
+
+            toast.className = `${bgColor} text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 transition duration-200 transform translate-y-3 opacity-0`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-3', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 250);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
